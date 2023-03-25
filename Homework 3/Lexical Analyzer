@@ -1,0 +1,116 @@
+import re
+
+class Lexer:
+    def __init__(self, text):
+        self.text = text
+        self.pos = 0
+        self.current_token = None
+
+    def advance(self):
+        self.pos += 1
+
+    def skip_whitespace(self):
+        while self.pos < len(self.text) and self.text[self.pos].isspace():
+            self.advance()
+
+    def get_next_token(self):
+        if self.pos >= len(self.text):
+            return None
+
+        # Addition token
+        if self.text[self.pos] == '+':
+            self.current_token = ('ADD', '+')
+            self.advance()
+
+        # Subtraction token
+        elif self.text[self.pos] == '-':
+            self.current_token = ('SUB', '-')
+            self.advance()
+
+        # Multiplication token
+        elif self.text[self.pos] == '*':
+            self.current_token = ('MUL', '*')
+            self.advance()
+
+        # Division token
+        elif self.text[self.pos] == '/':
+            self.current_token = ('DIV', '/')
+            self.advance()
+
+        # Modulo token
+        elif self.text[self.pos] == '%':
+            self.current_token = ('MOD', '%')
+            self.advance()
+
+        # Grouping symbols tokens
+        elif self.text[self.pos] == '(':
+            self.current_token = ('LPAREN', '(')
+            self.advance()
+        elif self.text[self.pos] == ')':
+            self.current_token = ('RPAREN', ')')
+            self.advance()
+
+        # Assignment token
+        elif self.text[self.pos] == '=':
+            self.current_token = ('ASSIGN', '=')
+            self.advance()
+
+        # Equals token
+        elif self.text[self.pos:self.pos+2] == '==':
+            self.current_token = ('EQ', '==')
+            self.pos += 2
+
+        # Less than or Less than or equal to token
+        elif self.text[self.pos] == '<':
+            self.advance()
+            if self.text[self.pos] == '=':
+                self.current_token = ('LTE', '<=')
+                self.advance()
+            else:
+                self.current_token = ('LT', '<')
+
+        # Greater than or Greater than or equal to token
+        elif self.text[self.pos] == '>':
+            self.advance()
+            if self.text[self.pos] == '=':
+                self.current_token = ('GTE', '>=')
+                self.advance()
+            else:
+                self.current_token = ('GT', '>')
+
+        # Logical and token
+        elif self.text[self.pos:self.pos+2] == '&&':
+            self.current_token = ('AND', '&&')
+            self.pos += 2
+
+        # Logical or token
+        elif self.text[self.pos:self.pos+2] == '||':
+            self.current_token = ('OR', '||')
+            self.pos += 2
+
+        # Variable identifier or integer/floating point literal token
+        elif self.text[self.pos].isalpha():
+            match = re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*', self.text[self.pos:])
+            self.current_token = ('ID', match.group())
+            self.pos += len(match.group())
+
+        elif self.text[self.pos].isdigit():
+            match = re.match(r'^\d+(\.\d+)?', self.text[self.pos:])
+            if '.' in match.group():
+                self.current_token = ('FLOAT', float(match.group()))
+            else:
+                self.current_token = ('INT', int(match.group()))
+            self.pos += len(match.group())
+
+        else:
+            return None
+
+        return self.current_token
+
+
+def tokenize(file_path):
+    with open(file_path) as f:
+        text = f.read()
+
+    lexer = Lexer(text)
+   
