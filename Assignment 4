@@ -1,0 +1,146 @@
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.current_token = None
+        self.pos = -1
+        self.advance()
+
+    def advance(self):
+        self.pos += 1
+        if self.pos < len(self.tokens):
+            self.current_token = self.tokens[self.pos]
+        else:
+            self.current_token = None
+    
+    def match(self, expected):
+        if self.current_token and self.current_token[0] == expected:
+            self.advance()
+            return True
+        return False
+    
+    def stmt(self):
+        if self.if_stmt() or self.block() or self.expr() or self.while_loop():
+            return True
+        return False
+    
+    def stmt_list(self):
+        if not self.match('{'):
+            return False
+        
+        while self.stmt():
+            if not self.match(';'):
+                return False
+        
+        return self.match('}')
+    
+    def while_loop(self):
+        if not self.match('while'):
+            return False
+        
+        if not self.match('('):
+            return False
+        
+        if not self.bool_expr():
+            return False
+        
+        if not self.match(')'):
+            return False
+        
+        if self.stmt():
+            return self.match(';')
+        
+        return self.block()
+    
+    def if_stmt(self):
+        if not self.match('if'):
+            return False
+        
+        if not self.match('('):
+            return False
+        
+        if not self.bool_expr():
+            return False
+        
+        if not self.match(')'):
+            return False
+        
+        if self.stmt():
+            if self.match('else'):
+                if self.stmt():
+                    return self.match(';')
+                return self.block()
+            return self.match(';')
+        
+        return self.block()
+    
+    def block(self):
+        return self.match('{') and self.stmt_list()
+    
+    def factor(self):
+        if self.match('ID') or self.match('INT_LIT') or self.match('FLOAT_LIT'):
+            return True
+        
+        if self.match('(') and self.expr() and self.match(')'):
+            return True
+        
+        return False
+    
+    def term(self):
+        if not self.factor():
+            return False
+        
+        while self.match('*') or self.match('/') or self.match('%'):
+            if not self.factor():
+                return False
+        
+        return True
+    
+    def expr(self):
+        if not self.term():
+            return False
+        
+        while self.match('+') or self.match('-'):
+            if not self.term():
+                return False
+        
+        return True
+    
+    def band(self):
+        if not self.bor():
+            return False
+        
+        while self.match('&&'):
+            if not self.bor():
+                return False
+        
+        return True
+    
+    def bor(self):
+        if not self.expr():
+            return False
+        
+        while self.match('||'):
+            if not self.expr():
+                return False
+        
+        return True
+    
+    def bterm(self):
+        if not self.band():
+            return False
+        
+        while self.match('==') or self.match('!='):
+            if not self.band():
+                return False
+        
+        return True
+    
+    def bool_expr(self):
+        if not self.bterm():
+            return False
+        
+        while self.match('>') or self.match('<') or self.match('>=') or self.match('<='):
+            if not self.bterm():
+                return False
+        
+        return True
