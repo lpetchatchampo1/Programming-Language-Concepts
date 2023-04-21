@@ -1,0 +1,23 @@
+DataType num
+DataType bool
+DataType str
+
+num x = 5;
+num y = 7;
+bool b = (x > y) && (str == "hello");
+
+if (b) {
+  num z = x + y;
+  while (z >= x) {
+    z = z - x;
+  }
+} else {
+  str = str + " world";
+}
+
+{ 
+  num i = 0;
+  while (i < x) {
+    i = i + 1;
+  }
+}
