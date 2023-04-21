@@ -1,0 +1,102 @@
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.index = 0
+
+    def match(self, expected):
+        if self.index < len(self.tokens) and self.tokens[self.index].value == expected:
+            self.index += 1
+            return True
+        return False
+
+    def parse(self):
+        return self.stmt_list()
+
+    def stmt_list(self):
+        stmts = []
+        while self.index < len(self.tokens):
+            stmts.append(self.stmt())
+            if not self.match(";"):
+                break
+        return stmts
+
+    def stmt(self):
+        if self.tokens[self.index].type == "IF":
+            return self.if_stmt()
+        elif self.tokens[self.index].type == "LEFT_BRACE":
+            return self.block()
+        elif self.tokens[self.index].type == "ID" and self.tokens[self.index + 1].value == "=":
+            return self.assign()
+        elif self.tokens[self.index].type == "DATA_TYPE":
+            return self.declare()
+        elif self.tokens[self.index].type == "WHILE":
+            return self.while_loop()
+
+    def while_loop(self):
+        self.match("WHILE")
+        self.match("LEFT_PAREN")
+        bool_expr = self.bool_expr()
+        self.match("RIGHT_PAREN")
+        block = self.block()
+        return ("WHILE", bool_expr, block)
+
+    def if_stmt(self):
+        self.match("IF")
+        self.match("LEFT_PAREN")
+        bool_expr = self.bool_expr()
+        self.match("RIGHT_PAREN")
+        block1 = self.block()
+        if self.match("ELSE"):
+            block2 = self.block()
+            return ("IF-ELSE", bool_expr, block1, block2)
+        return ("IF", bool_expr, block1)
+
+    def block(self):
+        self.match("LEFT_BRACE")
+        stmts = self.stmt_list()
+        self.match("RIGHT_BRACE")
+        return stmts
+
+    def declare(self):
+        data_type = self.tokens[self.index].value
+        self.match("DATA_TYPE")
+        ids = [self.tokens[self.index].value]
+        self.match("ID")
+        while self.match(","):
+            ids.append(self.tokens[self.index].value)
+            self.match("ID")
+        return ("DECLARE", data_type, ids)
+
+    def assign(self):
+        id = self.tokens[self.index].value
+        self.match("ID")
+        self.match("=")
+        expr = self.expr()
+        return ("ASSIGN", id, expr)
+
+    def expr(self):
+        term = self.term()
+        while self.index < len(self.tokens) and self.tokens[self.index].value in ["+", "-", "*", "/", "%"]:
+            op = self.tokens[self.index].value
+            self.match(op)
+            term2 = self.term()
+            term = (op, term, term2)
+        return term
+
+    def term(self):
+        fact = self.fact()
+        while self.index < len(self.tokens) and self.tokens[self.index].value in ["*", "/", "%"]:
+            op = self.tokens[self.index].value
+            self.match(op)
+            fact2 = self.fact()
+            fact = (op, fact, fact2)
+        return fact
+
+    def fact(self):
+        if self.match("ID"):
+            return ("ID", self.tokens[self.index - 1].value)
+        elif self.match("INT_LIT"):
+            return ("INT_LIT", int(self.tokens[self.index - 1].value))
+        elif self.match("FLOAT_LIT"):
+            return ("FLOAT_LIT", float(self.tokens[self.index - 1].value))
+        elif self.match("
